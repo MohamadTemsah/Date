@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Date Request</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --rose:#b0225a; --rose-btn:#c21f63; --rose-btn-2:#e0417f;
+    --ink:#3a2b31; --muted:#9a8a90; --card:#ffffff; --line:#efe6ea; --sel:#b0225a;
+    --bg1:#f7e9ef; --bg2:#efe6f3; --bg3:#f6eef0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(1200px 800px at 20% 0%, var(--bg1), transparent 60%),
+      radial-gradient(1000px 700px at 90% 20%, var(--bg2), transparent 55%),
+      linear-gradient(160deg, var(--bg3), #f2e9ee);
+    min-height:100dvh;display:flex;align-items:center;justify-content:center;
+    padding:70px 16px 24px;overflow-x:hidden;
+  }
+
+  /* language toggle */
+  .lang-bar{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;
+    display:flex;gap:6px;background:#fff;border:1px solid var(--line);
+    border-radius:999px;padding:5px;box-shadow:0 6px 18px -10px rgba(120,40,70,.4);}
+  .lang-btn{border:none;background:transparent;cursor:pointer;color:var(--muted);
+    font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;
+    padding:6px 14px;border-radius:999px;transition:all .15s;}
+  .lang-btn.on{background:var(--rose);color:#fff;}
+
+  .screen{display:none;width:100%;max-width:440px;animation:pop .45s cubic-bezier(.2,.9,.3,1.3);}
+  .screen.active{display:block;}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97);}to{opacity:1;transform:none;}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:26px;
+    padding:34px 28px;box-shadow:0 24px 60px -28px rgba(120,40,70,.35);}
+  h1{font-family:'Playfair Display',serif;color:var(--rose);font-weight:700;
+    line-height:1.15;text-align:center;letter-spacing:.2px;}
+
+  #s1 h1{font-size:2rem;margin-bottom:34px;}
+  .ask-btns{position:relative;height:150px;}
+  .btn-yes{display:block;width:100%;border:none;cursor:pointer;padding:18px;border-radius:999px;
+    font-family:'Inter',sans-serif;font-size:1.15rem;font-weight:600;color:#fff;
+    background:linear-gradient(90deg,var(--rose-btn),var(--rose-btn-2));
+    box-shadow:0 12px 26px -10px rgba(194,31,99,.7);
+    transition:transform .15s ease, box-shadow .15s ease;animation:breathe 2.4s ease-in-out infinite;}
+  @keyframes breathe{0%,100%{transform:scale(1);}50%{transform:scale(1.03);}}
+  .btn-yes:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 16px 30px -10px rgba(194,31,99,.75);}
+  .btn-yes:active{transform:translateY(0);}
+  .btn-no{position:absolute;left:50%;top:82px;transform:translateX(-50%);
+    border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;
+    padding:12px 26px;border-radius:999px;font-size:1rem;font-weight:500;
+    transition:transform .18s ease, opacity .18s ease;}
+
+  #s2 h1, #s3 h1, #s4 h1{font-size:1.8rem;}
+  #s2 h1{margin-bottom:6px;}
+  .section-label{font-weight:600;color:var(--ink);margin:22px 4px 12px;font-size:1rem;}
+
+  .cal-head{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 14px;}
+  .cal-head .month{font-weight:600;font-size:1.05rem;}
+  .cal-nav{border:none;background:#f6eef1;color:var(--rose);width:34px;height:34px;
+    border-radius:50%;cursor:pointer;font-size:1rem;display:grid;place-items:center;transition:background .15s;}
+  .cal-nav:hover{background:#f0dce6;}
+  .cal-nav:disabled{opacity:.3;cursor:default;}
+
+  .dow,.grid{display:grid;grid-template-columns:repeat(7,1fr);}
+  .dow span{text-align:center;font-size:.78rem;color:var(--muted);padding:6px 0;font-weight:500;}
+  .day{aspect-ratio:1;display:grid;place-items:center;margin:2px auto;width:38px;border-radius:50%;
+    font-size:.95rem;cursor:pointer;color:var(--ink);transition:background .12s,color .12s,transform .12s;}
+  .day.empty{cursor:default;}
+  .day.disabled{color:#d8cdd2;cursor:default;}
+  .day.pickable:hover{background:#f6eef1;}
+  .day.selected{background:var(--sel);color:#fff;font-weight:600;transform:scale(1.05);}
+
+  .times{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .time{border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;
+    padding:12px 4px;border-radius:999px;font-size:.82rem;font-weight:500;transition:all .12s;}
+  .time:hover{border-color:#e6c9d6;}
+  .time.selected{background:var(--sel);color:#fff;border-color:var(--sel);font-weight:600;}
+
+  .foods{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;}
+  .food{border:1px solid var(--line);background:#fff;cursor:pointer;padding:26px 10px;
+    border-radius:18px;text-align:center;transition:all .14s;}
+  .food:hover{transform:translateY(-2px);border-color:#e6c9d6;}
+  .food .emoji{font-size:2.1rem;display:block;margin-bottom:10px;}
+  .food .name{font-weight:500;color:var(--ink);}
+  .food.selected{border-color:var(--sel);box-shadow:0 0 0 2px var(--sel) inset;background:#fdf5f8;}
+
+  .cta{display:block;width:100%;border:none;cursor:pointer;margin-top:26px;padding:16px;
+    border-radius:999px;font-size:1.05rem;font-weight:600;color:#fff;
+    background:linear-gradient(90deg,var(--rose-btn),var(--rose-btn-2));
+    box-shadow:0 12px 26px -12px rgba(194,31,99,.7);transition:transform .15s,opacity .15s;}
+  .cta:hover{transform:translateY(-2px);}
+  .cta:disabled{opacity:.4;cursor:default;transform:none;}
+
+  #s4 .card{text-align:center;}
+  #s4 h1{font-size:2.4rem;margin-bottom:22px;}
+  .summary{background:#faf3f6;border:1px solid var(--line);border-radius:18px;padding:20px 22px;
+    text-align:left;display:flex;flex-direction:column;gap:16px;margin-bottom:22px;}
+  .summary .row{display:flex;align-items:center;gap:14px;font-size:1.1rem;}
+  .summary .row .ic{font-size:1.3rem;}
+  .closing{font-family:'Playfair Display',serif;font-style:italic;color:var(--rose);
+    font-size:1.4rem;margin-bottom:20px;}
+  .footnote{color:var(--muted);font-style:italic;font-size:.9rem;line-height:1.5;}
+
+  .dots{display:flex;gap:8px;justify-content:center;margin-top:20px;}
+  .dots i{width:7px;height:7px;border-radius:50%;background:#e3d3da;transition:background .2s;}
+  .dots i.on{background:var(--rose);}
+
+  /* confetti */
+  .confetti{position:fixed;top:-6vh;font-size:1.4rem;pointer-events:none;z-index:40;will-change:transform,opacity;}
+  @keyframes fall{to{transform:translateY(112vh) rotate(360deg);opacity:0;}}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body dir="ltr">
+
+<div class="lang-bar">
+  <button class="lang-btn" data-l="de" onclick="setLang('de')">DE</button>
+  <button class="lang-btn" data-l="en" onclick="setLang('en')">EN</button>
+</div>
+
+<!-- SCREEN 1 -->
+<section id="s1" class="screen active">
+  <div class="card">
+    <h1 id="askH1"></h1>
+    <div class="ask-btns">
+      <button class="btn-yes" id="yesBtn" onclick="goTo('s2')"></button>
+      <button class="btn-no" id="noBtn"></button>
+    </div>
+  </div>
+</section>
+
+<!-- SCREEN 2 -->
+<section id="s2" class="screen">
+  <div class="card">
+    <h1 id="whenH1"></h1>
+    <div class="section-label" id="lblPickDay"></div>
+    <div class="cal-head">
+      <button class="cal-nav" id="prevM" onclick="changeMonth(-1)">‹</button>
+      <span class="month" id="monthLabel"></span>
+      <button class="cal-nav" id="nextM" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="dow" id="dowRow"></div>
+    <div class="grid" id="calGrid"></div>
+    <div class="section-label" id="lblWhatTime"></div>
+    <div class="times" id="timeGrid"></div>
+    <button class="cta" id="dateCta" onclick="goTo('s3')" disabled></button>
+    <div class="dots"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+  </div>
+</section>
+
+<!-- SCREEN 3 -->
+<section id="s3" class="screen">
+  <div class="card">
+    <h1 id="foodH1"></h1>
+    <div class="foods" id="foodGrid"></div>
+    <button class="cta" id="foodCta" onclick="finish()" disabled></button>
+    <div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+  </div>
+</section>
+
+<!-- SCREEN 4 -->
+<section id="s4" class="screen">
+  <div class="card">
+    <h1 id="yayH1"></h1>
+    <div class="summary">
+      <div class="row"><span class="ic">📅</span><span id="sumDate"></span></div>
+      <div class="row"><span class="ic">⏰</span><span id="sumTime"></span></div>
+      <div class="row"><span class="ic">🍽️</span><span id="sumFood"></span></div>
+    </div>
+    <div class="closing" id="closing"></div>
+    <div class="footnote" id="footnote"></div>
+    <div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  </div>
+</section>
+
+<script>
+  /* ============================================================
+     ▼▼▼  ضع هون الـ Access Key من web3forms.com  ▼▼▼
+     ============================================================ */
+  const ACCESS_KEY = "31652833-59e6-41c5-b8c4-73a0db79ba09";
+
+  /* ---------- read URL: ?to=Name&lang=de ---------- */
+  const params = new URLSearchParams(window.location.search);
+  const personName = (params.get('to') || "").trim();
+  let lang = ['de','en'].includes(params.get('lang')) ? params.get('lang') : 'de';
+
+  /* ---------- translations ---------- */
+  const EN_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const EN_DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  const I18N = {
+    de:{ dir:'ltr',
+      ask:n=> n? '🌸 Willst du mit mir ausgehen, '+n+'? 🌸' : '🌸 Willst du mit mir ausgehen? 🌸',
+      yes:'JA 🤍', no:'NEIN 🥺',
+      whenTitle:'Wann hast du Zeit? 📅🐾', pickDay:'Wähle einen Tag', whatTime:'Um wie viel Uhr?',
+      setDate:'Date festlegen 🤍', foodTitle:'Worauf haben wir Lust? 🍽️✨', next:'Weiter 💕',
+      yay:'JUHU!! 💕', cantWait:'Ich kann es kaum erwarten, dich zu sehen! 🌷✨',
+      footnote:'(normale Typen schreiben Nachrichten, ich habe eine Website gebaut. ich bin nicht wie die anderen xx)',
+      months:['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'],
+      days:['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'],
+      dow:['So','Mo','Di','Mi','Do','Fr','Sa'],
+      foods:{Pizza:'Pizza',Sushi:'Sushi',Burgers:'Burger',Pasta:'Pasta',Tacos:'Tacos',Ramen:'Ramen'} },
+    en:{ dir:'ltr',
+      ask:n=> n? '🌸 Will you go on a date with me, '+n+'? 🌸' : '🌸 Will you go on a date with me? 🌸',
+      yes:'YES 🤍', no:'NO 🥺',
+      whenTitle:'So… when are you free? 📅🐾', pickDay:'Pick a day', whatTime:'What time?',
+      setDate:'Set the date 🤍', foodTitle:'What are we feeling? 🍽️✨', next:'Next 💕',
+      yay:'YAY!! 💕', cantWait:"I can't wait to see you! 🌷✨",
+      footnote:'(normal guys send texts, i made a website. i\'m not like other guys xx)',
+      months:EN_MONTHS, days:EN_DAYS, dow:['Su','Mo','Tu','We','Th','Fr','Sa'],
+      foods:{Pizza:'Pizza',Sushi:'Sushi',Burgers:'Burgers',Pasta:'Pasta',Tacos:'Tacos',Ramen:'Ramen'} }
+  };
+
+  /* ---------- data ---------- */
+  const TIME_SLOTS=[{h:12,m:0},{h:13,m:0},{h:14,m:0},{h:15,m:0},{h:16,m:0},{h:17,m:0},
+                    {h:18,m:0},{h:18,m:30},{h:19,m:0},{h:19,m:30},{h:20,m:0},{h:20,m:30}];
+  const FOOD_KEYS=['Pizza','Sushi','Burgers','Pasta','Tacos','Ramen'];
+  const FOOD_EMOJI={Pizza:'🍕',Sushi:'🍣',Burgers:'🍔',Pasta:'🍝',Tacos:'🌮',Ramen:'🍜'};
+
+  const state = { date:null, time:null, food:null };
+
+  function fmtTime(t,l){
+    const mm=t.m<10?'0'+t.m:''+t.m;
+    if(l==='de'){const hh=t.h<10?'0'+t.h:''+t.h;return hh+':'+mm+' Uhr';}
+    let h12=t.h%12; if(h12===0)h12=12;
+    const ap = t.h>=12?'PM':'AM';
+    return h12+':'+mm+' '+ap;
+  }
+
+  /* ---------- navigation ---------- */
+  function goTo(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const el=document.getElementById(id);el.classList.add('active');
+    el.style.animation='none';el.offsetHeight;el.style.animation='';window.scrollTo(0,0);
+  }
+
+  /* ---------- runaway NO ---------- */
+  const noBtn=document.getElementById('noBtn');
+  let noScale=1, angle=0;
+  function dodge(){
+    const pad=20,w=window.innerWidth,h=window.innerHeight,bw=noBtn.offsetWidth,bh=noBtn.offsetHeight;
+    const x=Math.random()*(w-bw-pad*2)+pad, y=Math.random()*(h-bh-pad*2)+pad;
+    noScale=Math.max(0.5,noScale-0.07); angle=(Math.random()*30-15);
+    noBtn.style.position='fixed';noBtn.style.left=x+'px';noBtn.style.top=y+'px';
+    noBtn.style.transform='scale('+noScale+') rotate('+angle+'deg)';
+  }
+  noBtn.addEventListener('mouseover',dodge);
+  noBtn.addEventListener('click',e=>{e.preventDefault();dodge();});
+  noBtn.addEventListener('touchstart',e=>{e.preventDefault();dodge();},{passive:false});
+
+  /* ---------- calendar ---------- */
+  const today=new Date();today.setHours(0,0,0,0);
+  let viewYear=today.getFullYear(),viewMonth=today.getMonth();
+  function renderCalendar(){
+    const t=I18N[lang];
+    document.getElementById('monthLabel').textContent=t.months[viewMonth]+' '+viewYear;
+    const grid=document.getElementById('calGrid');grid.innerHTML='';
+    const firstDow=new Date(viewYear,viewMonth,1).getDay();
+    const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
+    for(let i=0;i<firstDow;i++){const e=document.createElement('div');e.className='day empty';grid.appendChild(e);}
+    for(let d=1;d<=daysInMonth;d++){
+      const cell=document.createElement('div');const cd=new Date(viewYear,viewMonth,d);cell.textContent=d;
+      if(cd<today){cell.className='day disabled';}
+      else{cell.className='day pickable';
+        if(state.date&&state.date.getTime()===cd.getTime())cell.classList.add('selected');
+        cell.onclick=()=>{state.date=cd;renderCalendar();updateDateCta();};}
+      grid.appendChild(cell);
+    }
+    document.getElementById('prevM').disabled=(viewYear===today.getFullYear()&&viewMonth===today.getMonth());
+  }
+  function changeMonth(delta){viewMonth+=delta;if(viewMonth<0){viewMonth=11;viewYear--;}if(viewMonth>11){viewMonth=0;viewYear++;}renderCalendar();}
+
+  /* ---------- times ---------- */
+  function renderTimes(){
+    const grid=document.getElementById('timeGrid');grid.innerHTML='';
+    TIME_SLOTS.forEach(slot=>{
+      const b=document.createElement('button');b.className='time';b.textContent=fmtTime(slot,lang);
+      if(state.time===slot)b.classList.add('selected');
+      b.onclick=()=>{state.time=slot;renderTimes();updateDateCta();};
+      grid.appendChild(b);
+    });
+  }
+  function updateDateCta(){document.getElementById('dateCta').disabled=!(state.date&&state.time);}
+
+  /* ---------- food ---------- */
+  function renderFoods(){
+    const t=I18N[lang];const grid=document.getElementById('foodGrid');grid.innerHTML='';
+    FOOD_KEYS.forEach(k=>{
+      const c=document.createElement('div');c.className='food';
+      if(state.food===k)c.classList.add('selected');
+      c.innerHTML='<span class="emoji">'+FOOD_EMOJI[k]+'</span><span class="name">'+t.foods[k]+'</span>';
+      c.onclick=()=>{state.food=k;renderFoods();document.getElementById('foodCta').disabled=false;};
+      grid.appendChild(c);
+    });
+  }
+
+  /* ---------- summary + finish ---------- */
+  function fillSummary(){
+    const t=I18N[lang],d=state.date,dow=d.getDay(),dd=d.getDate();
+    let dateStr;
+    if(lang==='de') dateStr=t.days[dow]+', '+dd+'. '+t.months[d.getMonth()];
+    else dateStr=t.days[dow]+', '+t.months[d.getMonth()]+' '+dd;
+    document.getElementById('sumDate').textContent=dateStr;
+    document.getElementById('sumTime').textContent=fmtTime(state.time,lang);
+    document.getElementById('sumFood').textContent=t.foods[state.food];
+  }
+  function finish(){fillSummary();goTo('s4');launchConfetti();sendAnswer();}
+
+  /* ---------- send to your email ---------- */
+  function sendAnswer(){
+    if(!ACCESS_KEY) return;
+    const d=state.date;
+    const emailDate=EN_DAYS[d.getDay()]+', '+EN_MONTHS[d.getMonth()]+' '+d.getDate();
+    const who=personName||'Someone (kein Name im Link)';
+    const payload={
+      access_key:ACCESS_KEY,
+      subject:who+' said YES 💕 — Date confirmed!',
+      from_name:'Date Request',
+      "Name":who, "Answer":"YES 💕",
+      "Day":emailDate, "Time":fmtTime(state.time,'en'), "Food":state.food,
+      message:"🌸 "+who+" said YES!\n\n📅 Day:  "+emailDate+"\n⏰ Time: "+fmtTime(state.time,'en')+"\n🍽️ Food: "+state.food+"\n"
+    };
+    fetch("https://api.web3forms.com/submit",{
+      method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},
+      body:JSON.stringify(payload)
+    }).catch(()=>{});
+  }
+
+  /* ---------- confetti hearts ---------- */
+  function launchConfetti(){
+    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    const emojis=['💕','💖','🩷','🌷','✨','💗'];
+    for(let i=0;i<34;i++){
+      const s=document.createElement('div');s.className='confetti';
+      s.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+      s.style.left=Math.random()*100+'vw';
+      s.style.fontSize=(0.9+Math.random()*1.4)+'rem';
+      const dur=2.6+Math.random()*2.2, del=Math.random()*0.8;
+      s.style.animation='fall '+dur+'s linear '+del+'s forwards';
+      document.body.appendChild(s);
+      setTimeout(()=>s.remove(),(dur+del)*1000+200);
+    }
+  }
+
+  /* ---------- language ---------- */
+  function setLang(l){lang=l;applyLang();}
+  function applyLang(){
+    const t=I18N[lang];
+    document.documentElement.lang=lang;document.body.dir='ltr';
+    document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('on',b.dataset.l===lang));
+    document.getElementById('askH1').textContent=t.ask(personName);
+    document.getElementById('yesBtn').textContent=t.yes;
+    noBtn.textContent=t.no;
+    document.getElementById('whenH1').textContent=t.whenTitle;
+    document.getElementById('lblPickDay').textContent=t.pickDay;
+    document.getElementById('lblWhatTime').textContent=t.whatTime;
+    document.getElementById('dateCta').textContent=t.setDate;
+    document.getElementById('foodH1').textContent=t.foodTitle;
+    document.getElementById('foodCta').textContent=t.next;
+    document.getElementById('yayH1').textContent=t.yay;
+    document.getElementById('closing').textContent=t.cantWait;
+    document.getElementById('footnote').textContent=t.footnote;
+    document.getElementById('dowRow').innerHTML=t.dow.map(d=>'<span>'+d+'</span>').join('');
+    renderCalendar();renderTimes();renderFoods();
+    if(state.date&&document.getElementById('s4').classList.contains('active'))fillSummary();
+  }
+
+  applyLang();
+</script>
+</body>
+</html>
